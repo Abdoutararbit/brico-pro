@@ -1,0 +1,50 @@
+import React, { useState } from "react";
+import { Card } from "react-bootstrap";
+
+const StarRating = () => {
+  const [rating, setRating] = useState(0);
+
+  const handleRatingChange = (newRating) => {
+    setRating(newRating);
+  };
+
+  const stars = [1, 2, 3, 4, 5];
+
+  return (
+    <Card>
+      <div className="container">
+        <h1 className="mt-5">Évaluation par étoiles</h1>
+        <div className="star-rating">
+          {stars.map((star) => (
+            <span
+              key={star}
+              className={star <= rating ? "star-filled" : "star-empty"}
+              onClick={() => handleRatingChange(star)}
+            >
+              ★
+            </span>
+          ))}
+        </div>
+        <p>Vous avez attribué {rating} étoile(s).</p>
+
+        <style>{`
+      .star-rating {
+  font-size: 24px;
+}
+
+.star-filled {
+  color: gold;
+  cursor: pointer;
+}
+
+.star-empty {
+  color: #ccc;
+  cursor: pointer;
+}
+      `}</style>
+      </div>
+    </Card>
+  );
+};
+
+export default StarRating;
