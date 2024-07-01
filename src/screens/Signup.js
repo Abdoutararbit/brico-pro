@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
+import {
+  Modal,
+  Button,
+  Form,
+  Row,
+  Col,
+  FloatingLabel,
+  Stack,
+} from "react-bootstrap";
 import { API_URL } from "../utils/config";
+import { useNavigate, Link } from "react-router-dom";
 function Signup() {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState("client");
 
   const handleUserType = (type) => {
@@ -11,7 +22,12 @@ function Signup() {
 
   const validerFormulaire = async (event) => {
     event.preventDefault();
-
+    // Vérifier la validité du formulaire
+    const form = event.target;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
     try {
       const formData = new FormData();
       formData.append("username", event.target.elements.nom.value);
@@ -35,6 +51,9 @@ function Signup() {
       );
 
       console.log(response.data); // Message de succès du serveur
+      // Afficher l'alerte pour une inscription réussie
+      window.alert("Inscription réussie !");
+      navigate("/");
 
       // Réinitialiser le formulaire
       //event.target.reset();
@@ -53,7 +72,9 @@ function Signup() {
         const response = await axios.get(`${API_URL}/getAllProfessions`);
         setProfessions(response.data);
       } catch (error) {
-        setError("Error occurred while fetching professions.");
+        setError(
+          "Une erreur s'est produite lors de la récupération des professions."
+        );
         console.error(error);
       }
     };
@@ -62,83 +83,147 @@ function Signup() {
   }, []);
 
   return (
-    <div className="container">
-      <h1>Formulaire d'inscription</h1>
-
-      <form id="inscription-form" onSubmit={validerFormulaire}>
-        <div className="form-group">
-          <label htmlFor="nom">Nom :</label>
-          <input type="text" id="nom" name="nom" />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="adresse">Adresse :</label>
-          <input type="text" id="adresse" name="adresse" />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email">Email :</label>
-          <input type="email" id="email" name="email" />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Mot de passe :</label>
-          <input type="password" id="password" name="password" />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="picture">Photo :</label>
-          <input type="file" id="picture" name="picture" accept="image/*" />
-        </div>
-        <div className="form-group">
-          <label>Type d'utilisateur :</label>
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="client"
-              name="client"
-              onClick={() => handleUserType("client")}
-              checked={userType === "client"}
-            />
-            <label htmlFor="client">Client</label>
-            <input
-              type="checkbox"
-              id="profesional"
-              name="profesional"
-              onClick={() => handleUserType("profesional")}
-              checked={userType === "profesional"}
-            />
-            <label htmlFor="profesional">professionel</label>
-          </div>
-        </div>
-
-        {userType === "profesional" && (
-          <div id="profesional-fields">
-            <div className="form-group">
-              <label htmlFor="type-service">Professions:</label>
-              <select id="type-service" name="type-service">
-                {professions.map((profession) => (
-                  <option key={profession._id} value={profession._id}>
-                    {profession.name}
-                  </option>
-                ))}
-              </select>
+    <div>
+      <div className="bg-dark text-white">{/* Your ScreenTwo content */}</div>
+      <div className="allcontainer">
+        <row>
+          <div className="containerbb">
+            <div className="h1">
+              <h1 style={{ color: "#319795" }}>Formulaire d'inscription</h1>
             </div>
+            <form id="inscription-form" onSubmit={validerFormulaire}>
+              <div className="form-group">
+                <label htmlFor="nom">Nom :</label>
+                <input
+                  type="text"
+                  id="nom"
+                  name="nom"
+                  placeholder="Saisissez votre nom ici"
+                  required // Champ obligatoire
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="adresse">Adresse :</label>
+                <input
+                  type="text"
+                  id="adresse"
+                  name="adresse"
+                  placeholder="Saisissez votre adresse ici"
+                  required // Champ obligatoire
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Email :</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="Saisissez votre email ici"
+                  required // Champ obligatoire
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Mot de passe :</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="Saisissez votre mot de passe ici"
+                  required // Champ obligatoire
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="picture">Sélectionner une photo :</label>
+                <input
+                  type="file"
+                  id="picture"
+                  name="picture"
+                  accept="image/*"
+                  required // Champ obligatoire
+                  title="Sélectionner une photo"
+                />
+              </div>
+              <div className="form-group">
+                <label>Type d'utilisateur :</label>
+                <div className="checkbox-group d-flex flex-row">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="client"
+                      name="client"
+                      onClick={() => handleUserType("client")}
+                      checked={userType === "client"}
+                    />
+                    <label className="form-check-label" htmlFor="client">
+                      Client
+                    </label>
+                  </div>
+                  <div className="form-check" style={{ marginLeft: "10px" }}>
+                    <input
+                      className="form-check-input"
+                      title="Cochez cette case si vous êtes un professionnel"
+                      type="checkbox"
+                      id="profesional"
+                      name="profesional"
+                      onClick={() => handleUserType("profesional")}
+                      checked={userType === "profesional"}
+                    />
+                    <label className="form-check-label" htmlFor="profesional">
+                      Professionnel
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {userType === "profesional" && (
+                <div id="profesional-fields">
+                  <div className="form-group">
+                    <label htmlFor="type-service">Type de profession :</label>
+                    <select id="type-service" name="type-service">
+                      {professions.map((profession) => (
+                        <option key={profession._id} value={profession._id}>
+                          {profession.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <input
+                style={{
+                  backgroundColor: "#319795",
+                  padding: "10px 20px",
+                  border: "4px solid white",
+                  boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.1)",
+                  color: "000000",
+                  textDecoration: "none",
+                  borderRadius: "10px",
+                  transition: "background-color 0.3s ease",
+                }}
+                type="submit"
+                value="S'inscrire"
+              />
+              <p className="text-center mt-3">
+                Déjà inscrit ?
+                <Link to="/Login" style={{ color: "#319795" }}>
+                  Connectez-vous ici
+                </Link>
+              </p>
+            </form>
           </div>
-        )}
-
-        <input className="submit-btn" type="submit" value="S'inscrire" />
-      </form>
-
-      <style>{`
+          <style>{`
         @import url("https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600,700,800");
 
-        * {
-          box-sizing: border-box;
-        }
+        
 
-        body {
-          background: #f6f8fa;
+        .allcontainer {
+         background: #000000; /* Couleur de l'arrière-plan en noir */
           min-height: 100vh;
           display: flex;
           justify-content: center;
@@ -146,8 +231,9 @@ function Signup() {
           font-weight: 400;
           font-family: "Fira Sans", sans-serif;
         }
+         
 
-        .container {
+        .containerbb {
           max-width: 500px;
           margin: auto;
           background-color: #ffffff;
@@ -158,8 +244,7 @@ function Signup() {
 
         h1 {
           text-align: center;
-          color: #007bff;
-        }
+         }
 
         .form-group {
           margin-bottom: 20px;
@@ -185,19 +270,13 @@ function Signup() {
         }
 
         .checkbox-group input[type="checkbox"] {
-          margin-right: 10px;
+          margin-right: 600px;
         }
 
-        .submit-btn {
-          background-color: #007bff;
-          color: #ffffff;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          width: 100%;
-        }
+         
       `}</style>
+        </row>
+      </div>
     </div>
   );
 }

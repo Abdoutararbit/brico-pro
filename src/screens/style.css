@@ -1,0 +1,15 @@
+.leaflet-marker-icon::before {
+  height: 50px !important;
+  width: 32px !important;
+  content: "";
+  display: block;
+  width: 20px; /* Adjust as needed */
+  height: 20px; /* Adjust as needed */
+  background-image: url("../assets/images/pngegg.png");
+  background-size: cover; /* Adjust as needed */
+  position: absolute;
+  top: -40px; /* Adjust to position the image above the marker */
+  /*left: 50%;*/
+  transform: translateX(-50%);
+  z-index: 1000;
+}

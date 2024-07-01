@@ -5,6 +5,8 @@ import { API_URL } from "../utils/config";
 import { Row, Col, Form, Button, Nav, Table } from "react-bootstrap";
 import "../bootstrap/bootstrap-5.0.2-dist/css/bootstrap.min.css";
 import Header from "../components/Header";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit, faTrash, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 const ProfileUser = () => {
   const { id } = useParams();
@@ -14,8 +16,13 @@ const ProfileUser = () => {
   const [user, setUser] = useState(null);
   const [editing, setEditing] = useState(false);
   const [updatedUser, setUpdatedUser] = useState(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("projects");
   const navigate = useNavigate();
+  const statusTranslations = {
+    accepted: "Accepté",
+    canceled: "Annulé",
+    rejected: "Refusé",
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,6 +52,8 @@ const ProfileUser = () => {
   };
 
   const handleSaveClick = async () => {
+    // Actualiser la page pour refléter les changements
+    window.location.reload();
     try {
       const response = await axios.put(
         `${API_URL}/updateusers/${id}`,
@@ -61,12 +70,21 @@ const ProfileUser = () => {
     setActiveTab(tab);
   };
   const handleCancelProject = async (projectId) => {
+    // Actualiser la page pour refléter les changements
+    window.location.reload();
     try {
       // Send a request to your backend API to cancel the project
-      const response = await axios.put(`/api/projects/${projectId}/cancel`);
-      // Assuming the backend responds with the updated project data
+      const response = await axios.post(
+        `${API_URL}/canceleProject?projectId=${projectId}`
+      ); // Assuming the backend responds with the updated project data
       // You can update the user's requestedProjects state or perform any other necessary updates
       console.log("Project canceled:", response.data);
+      console.log("Updated user's projects:", response.data);
+      // Mettre à jour l'état local de l'utilisateur avec les nouveaux projets
+      setUser((prevUser) => ({
+        ...prevUser,
+        requestedProjects: response.data.requestedProjects,
+      }));
     } catch (error) {
       console.error("Error canceling project:", error);
     }
@@ -75,12 +93,15 @@ const ProfileUser = () => {
     if (activeTab === "projects") {
       return (
         <div>
-          <h4>Projects Demander:</h4>
+          <h4>Projets Demander:</h4>
+          <hr></hr>
           <Table striped bordered hover>
             <thead>
               <tr>
                 <th>Subject</th>
                 <th>Description</th>
+                <th>Date Begin</th>
+                <th>Date Finish</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -90,14 +111,32 @@ const ProfileUser = () => {
                   <td>{project.subject}</td>
                   <td>{project.description}</td>
                   <td>
+                    {project.dateBegin
+                      ? new Date(project.dateBegin).toLocaleDateString()
+                      : ""}
+                  </td>
+                  <td>
+                    {project.dateFinish
+                      ? new Date(project.dateFinish).toLocaleDateString()
+                      : ""}
+                  </td>
+                  <td>
                     {project.status === "pending" ? (
                       <>
                         {isCurrentUserProfile ? (
                           <Button
-                            variant="outline-danger"
+                            className="btn btn-danger btn-sm d-flex align-items-center"
+                            style={{
+                              padding: "3px 6px",
+                              border: "3px solid white",
+                              boxShadow: "2px 2px 4px rgba(255, 255, 255, 0.1)", // Ajoute une ombre douce pour un effet 3D subtil
+                              borderRadius: "8px",
+                              transition: "background-color 0.3s ease",
+                            }}
                             onClick={() => handleCancelProject(project._id)}
                           >
-                            Annuler Project
+                            <FontAwesomeIcon icon={faTrash} />
+                            <span className="ms-1">Annuler projet</span>
                           </Button>
                         ) : (
                           <p
@@ -105,7 +144,7 @@ const ProfileUser = () => {
                               color: "blue",
                             }}
                           >
-                            {project.status}
+                            {statusTranslations[project.status]}
                           </p>
                         )}
                       </>
@@ -121,7 +160,7 @@ const ProfileUser = () => {
                               : "blue",
                         }}
                       >
-                        {project.status}
+                        {statusTranslations[project.status]}
                       </p>
                     )}
                   </td>
@@ -134,10 +173,11 @@ const ProfileUser = () => {
     } else if (activeTab === "profile-edit") {
       return (
         <div>
-          <h2>Edit Profile</h2>
+          <h2>modifier les Informations personnelles</h2>
+          <hr></hr>
           <Form>
             <Form.Group className="mb-3" controlId="formBasicName">
-              <Form.Label className="small">Name</Form.Label>
+              <Form.Label className="small">Nom/prenome</Form.Label>
               <Form.Control
                 type="text"
                 name="username"
@@ -146,7 +186,7 @@ const ProfileUser = () => {
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="formBasicEmail">
-              <Form.Label className="small">Email</Form.Label>
+              <Form.Label className="small">E-mail</Form.Label>
               <Form.Control
                 type="email"
                 name="email"
@@ -155,8 +195,20 @@ const ProfileUser = () => {
               />
             </Form.Group>
             {/* Add additional form fields for other user properties */}
-            <Button variant="outline-primary" onClick={handleSaveClick}>
-              Save
+            <Button
+              style={{
+                backgroundColor: "#1877F2",
+                padding: "10px 20px",
+                border: "2px solid white",
+                color: "#ffffff",
+                borderRadius: "8px",
+                boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                textDecoration: "none",
+                transition: "background-color 0.3s ease",
+              }}
+              onClick={handleSaveClick}
+            >
+              Sauvegarder
             </Button>
           </Form>
         </div>
@@ -164,15 +216,27 @@ const ProfileUser = () => {
     } else {
       return (
         <div>
-          <h6>User Profile</h6>
-          <p>Name: {user.username}</p>
-          <p>Email: {user.email}</p>
+          <h2>Informations personnelles</h2>
+          <p>Nom: {user.username}</p>
+          <p>E-mail: {user.email}</p>
           {/* Display other user properties as needed */}
           <>
             {isCurrentUserProfile && (
               <>
-                <Button variant="outline-primary" onClick={handleEditClick}>
-                  Edit
+                <Button
+                  style={{
+                    backgroundColor: "#1877F2",
+                    padding: "10px 20px",
+                    border: "2px solid white",
+                    color: "#ffffff",
+                    borderRadius: "8px",
+                    boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                    textDecoration: "none",
+                    transition: "background-color 0.3s ease",
+                  }}
+                  onClick={handleEditClick}
+                >
+                  <FontAwesomeIcon icon={faEdit} /> Modifier
                 </Button>
               </>
             )}
@@ -187,22 +251,27 @@ const ProfileUser = () => {
       <div className="bg-dark text-white">
         <Header />
         {/* Your ScreenTwo content */}
-        <br></br>
       </div>
+      <hr></hr>
+      <hr></hr>
+      <hr></hr>
+
       {user ? (
         <div>
           <div className="main-body">
             {/* /Breadcrumb */}
             <Row className="gutters-sm">
               <Col md="4" className="mb-3">
-                <div className="card h-100">
+                <div className="card">
                   <div className="card-body">
                     <div className="d-flex flex-column align-items-center text-center">
                       <img
                         src={`${API_URL}/${user.picture}`}
                         alt={user.username}
                         className="rounded-circle"
-                        width="220"
+                        width="220vm"
+                        height="180vh"
+                        style={{ cursor: "pointer", border: "2px solid black" }} // Optional: Show a pointer cursor when hovering over the image
                       />
 
                       <div className="mt-3">
@@ -214,15 +283,20 @@ const ProfileUser = () => {
                         <>
                           {isCurrentUserProfile && (
                             <>
-                              <button className="btn btn-outline-primary">
-                                Follow
-                              </button>
-
                               <button
-                                className="btn btn-outline-primary"
+                                style={{
+                                  backgroundColor: "#1877F2",
+                                  padding: "10px 20px",
+                                  border: "2px solid white",
+                                  color: "#ffffff",
+                                  borderRadius: "8px",
+                                  boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                                  textDecoration: "none",
+                                  transition: "background-color 0.3s ease",
+                                }}
                                 onClick={() => navigate("/Discussion")}
                               >
-                                Messagerie
+                                <FontAwesomeIcon icon={faEnvelope} /> Messagerie
                               </button>
                             </>
                           )}
@@ -234,11 +308,11 @@ const ProfileUser = () => {
                 <div className="card mt-3">
                   <ul className="list-group list-group-flush">
                     <li className="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                      <h6 className="mb-0">Website</h6>
+                      <h6 className="mb-0"> </h6>
                       <span className="text-secondary">{user.website}</span>
                     </li>
                     <li className="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                      <h6 className="mb-0">GitHub</h6>
+                      <h6 className="mb-0"> </h6>
                       <span className="text-secondary">{user.github}</span>
                     </li>
                   </ul>
@@ -247,21 +321,33 @@ const ProfileUser = () => {
               <Col md="8">
                 <div className="card h-100">
                   <div className="card-body">
-                    <Nav variant="tabs" defaultActiveKey="profile">
-                      <Nav.Item>
-                        <Nav.Link
-                          eventKey="profile"
-                          onClick={() => handleTabChange("profile")}
-                        >
-                          Profile
-                        </Nav.Link>
-                      </Nav.Item>
+                    <Nav variant="tabs" defaultActiveKey="projects">
                       <Nav.Item>
                         <Nav.Link
                           eventKey="projects"
                           onClick={() => handleTabChange("projects")}
+                          style={{
+                            backgroundColor:
+                              activeTab === "projects" ? "black" : "inherit",
+                            color:
+                              activeTab === "projects" ? "white" : "inherit",
+                          }}
                         >
-                          Projects
+                          Projets
+                        </Nav.Link>
+                      </Nav.Item>
+                      <Nav.Item>
+                        <Nav.Link
+                          eventKey="profile"
+                          onClick={() => handleTabChange("profile")}
+                          style={{
+                            backgroundColor:
+                              activeTab === "profile" ? "black" : "inherit",
+                            color:
+                              activeTab === "profile" ? "white" : "inherit",
+                          }}
+                        >
+                          Profil
                         </Nav.Link>
                       </Nav.Item>
                     </Nav>
@@ -275,6 +361,12 @@ const ProfileUser = () => {
       ) : (
         <p>Loading user data...</p>
       )}
+      <style>
+        {`
+    
+             
+      `}
+      </style>
     </div>
   );
 };

@@ -5,6 +5,9 @@ import { API_URL } from "../utils/config";
 import { Container, Row, Col, Form, Button, Nav, Table } from "react-bootstrap";
 import "../bootstrap/bootstrap-5.0.2-dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons"; // Importez les icônes que vous voulez utiliser
 
 const ProfilAdmin = () => {
   const [professionName, setProfessionName] = useState("");
@@ -80,7 +83,7 @@ const ProfilAdmin = () => {
   };
   const handleDeleteUser = async (userId) => {
     try {
-      await axios.delete(`${API_URL}/deleteusers/${userId}`); // Assuming the endpoint for deleting a user is '/api/users/:id'
+      await axios.delete(`${API_URL}/deleteuser/${userId}`); // Assuming the endpoint for deleting a user is '/api/users/:id'
 
       // Filter out the deleted user from the state
       const updatedUsers = users.filter((user) => user._id !== userId);
@@ -110,7 +113,7 @@ const ProfilAdmin = () => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Profession Name</th>
+                <th>Nom de la Profession</th>
                 <th>Action</th> {/* New column for the Delete button */}
               </tr>
             </thead>
@@ -121,10 +124,20 @@ const ProfilAdmin = () => {
                   <td>{profession.name}</td>
                   <td>
                     <Button
-                      variant="outline-danger"
+                      style={{
+                        backgroundColor: "red",
+                        padding: "10px 20px",
+                        border: "2px solid white",
+                        color: "#000000",
+                        borderRadius: "8px",
+                        boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                        textDecoration: "none",
+                        transition: "background-color 0.3s ease",
+                      }}
                       onClick={() => handleDeleteProfession(profession._id)}
                     >
-                      Delete
+                      <FontAwesomeIcon icon={faTrash} />
+                      Supprimer
                     </Button>
                   </td>
                 </tr>
@@ -134,25 +147,47 @@ const ProfilAdmin = () => {
           <div>
             <Button
               type="button"
-              variant="btn btn-outline-primary"
+              style={{
+                backgroundColor: "#1877F2",
+                padding: "10px 20px",
+                border: "2px solid white",
+                color: "#000000",
+                borderRadius: "8px",
+                boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                textDecoration: "none",
+                transition: "background-color 0.3s ease",
+              }}
               onClick={toggleAddProfession}
             >
               {showAddProfession ? "Hide" : "Show"} ajouter une proffession
             </Button>
             {showAddProfession && (
               <Form onSubmit={handleAddProfession}>
-                <br></br>
+                <hr></hr>
                 <Form.Group controlId="professionName">
-                  <h3>Profession Name:</h3>
+                  <h3>Nom de Métier:</h3>
                   <Form.Control
                     type="text"
                     value={professionName}
                     onChange={handleProfessionNameChange}
                   />
                 </Form.Group>
-                <br></br>
-                <Button variant="btn btn-outline-primary" type="submit">
-                  Add Profession
+                <hr></hr>
+                <Button
+                  type="submit"
+                  style={{
+                    backgroundColor: "#1877F2",
+                    padding: "10px 20px",
+                    border: "2px solid white",
+                    color: "#000000",
+                    borderRadius: "8px",
+                    boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                    textDecoration: "none",
+                    transition: "background-color 0.3s ease",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                  Ajouter un métier{" "}
                 </Button>
               </Form>
             )}
@@ -169,10 +204,10 @@ const ProfilAdmin = () => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
+                <th>Nom</th>
+                <th>E-mail</th>
                 <th>Profession</th>
-                <th>Delete</th>
+                <th>Supprimer</th>
               </tr>
             </thead>
             <tbody>
@@ -181,13 +216,23 @@ const ProfilAdmin = () => {
                   <td>{index + 1}</td>
                   <td>{user.username}</td>
                   <td>{user.email}</td>
-                  <td>{user.profession}</td>
+                  <td>{user?.profession?.name}</td>
                   <td>
                     <Button
-                      variant="outline-danger"
+                      style={{
+                        backgroundColor: "red",
+                        padding: "10px 20px",
+                        border: "2px solid white",
+                        color: "#000000",
+                        borderRadius: "8px",
+                        boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                        textDecoration: "none",
+                        transition: "background-color 0.3s ease",
+                      }}
                       onClick={() => handleDeleteUser(user._id)}
                     >
-                      Delete
+                      <FontAwesomeIcon icon={faTrash} />
+                      Supprimer
                     </Button>
                   </td>
                 </tr>
@@ -200,43 +245,59 @@ const ProfilAdmin = () => {
   };
 
   return (
-    <div className="container-fluid h-100">
-      <Row className="h-100">
-        <Col sm="8" className="h-100">
-          <div className="card custom-card">
-            {/* Utiliser la classe custom-card */}
-            <div className="card-body custom-card-body">
-              {/* Ajouter la classe custom-card-body */}
-              <Nav variant="tabs" defaultActiveKey="profession">
-                <Nav.Item>
-                  <Nav.Link
-                    eventKey="profession"
-                    onClick={() => handleTabChange("profession")}
-                  >
-                    Gestion Profession
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link
-                    eventKey="professionals"
-                    onClick={() => handleTabChange("professionals")}
-                  >
-                    Gestion des utilisateurs
-                  </Nav.Link>
-                </Nav.Item>
-              </Nav>
-              <div className="tab-content mt-4">{renderTabContent()}</div>
-            </div>
+    <>
+      <div className="bg-dark text-white">
+        <Header />
+        {/* Your ScreenTwo content */}
+      </div>
+      <hr></hr>
+      <hr></hr>
+      <hr></hr>
+
+      <div className="container-fluid h-200">
+        <div className="card custom-card">
+          {/* Utiliser la classe custom-card */}
+          <div className="card-body custom-card-body">
+            {/* Ajouter la classe custom-card-body */}
+            <Nav variant="tabs" defaultActiveKey="profession">
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="profession"
+                  onClick={() => handleTabChange("profession")}
+                  style={{
+                    backgroundColor:
+                      activeTab === "profession" ? "black" : "inherit",
+                    color: activeTab === "profession" ? "white" : "inherit",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlus} /> Gestion des Professions
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="professionals"
+                  onClick={() => handleTabChange("professionals")}
+                  style={{
+                    backgroundColor:
+                      activeTab === "professionals" ? "black" : "inherit",
+                    color: activeTab === "professionals" ? "white" : "inherit",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTrash} /> Gestion des utilisateurs
+                </Nav.Link>
+              </Nav.Item>
+            </Nav>
+            <div className="tab-content mt-4">{renderTabContent()}</div>
           </div>
-        </Col>
-      </Row>
-      <style>{` 
+        </div>
+
+        <style>{` 
        border: 1px solid #ccc;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             /* Propriétés personnalisées pour ajuster la largeur */
-            width: 800px; /* Largeur personnalisée */
-            height: 600px;
+            width: 800vm; /* Largeur personnalisée */
+            height: 600vh;
             .custom-card-body {
             display: flex;
             flex-direction: column;
@@ -318,7 +379,8 @@ const ProfilAdmin = () => {
           }
 
       `}</style>
-    </div>
+      </div>
+    </>
   );
 };
 

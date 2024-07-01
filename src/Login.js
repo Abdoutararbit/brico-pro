@@ -3,6 +3,7 @@ import "./bootstrap.min.css";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Login() {
   const location = useLocation();
@@ -29,18 +30,20 @@ function Login() {
       } else if (role === "user") {
         navigate(`/ProfilUser/${user._id}`);
       } else {
-        setError("Invalid role");
+        setError("Rôle invalide");
       }
-      // Store session data in local storage
+      // Stocker les données de session dans le stockage local
       sessionStorage.setItem("userId", user._id);
       sessionStorage.setItem("token", token);
+      sessionStorage.setItem("email", email);
       sessionStorage.setItem("role", role);
+      sessionStorage.setItem("isAdmin", user.isAdmin ?? false);
     } catch (error) {
-      // Handle sign-in error
+      // Gérer l'erreur de connexion
       if (error.response && error.response.status === 401) {
-        setError("Invalid email or password");
+        setError("Email ou mot de passe incorrect");
       } else {
-        setError("An error occurred. Please try again later.");
+        setError("Une erreur est survenue. Veuillez réessayer plus tard.");
       }
     }
   };
@@ -56,41 +59,54 @@ function Login() {
   return (
     <div className="container">
       <div className="auth-inner">
-        <h3>Sign In</h3>
+        <h2 style={{ color: "#1877F2 " }}>Connectez-vous à votre compte</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email address</label>
+            <label>Adresse e-mail</label>
             <input
               type="email"
               name="email"
               className="form-control"
-              placeholder="Enter email"
+              placeholder="Entrez votre adresse e-mail"
               value={email}
               onChange={handleEmailChange}
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>Mot de passe</label>
             <input
               type="password"
               name="password"
               className="form-control"
-              placeholder="Enter password"
+              placeholder="Entrez votre mot de passe"
               value={password}
               onChange={handlePasswordChange}
             />
           </div>
           <div className="d-grid">
-            <button type="submit" className="btn btn-primary">
-              Submit
+            <button
+              type="submit"
+              style={{
+                backgroundColor: "#1877F2 ",
+                padding: "10px 20px",
+                border: "4px solid white",
+                boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.1)", // Ajoute une ombre douce pour un effet 3D subtil
+                color: "#ffffff",
+                textDecoration: "none",
+                borderRadius: "10px",
+                transition: "background-color 0.3s ease",
+              }}
+            >
+              Se connecter
             </button>
           </div>
           {error && <p className="text-danger">{error}</p>}
-          <p className="forgot-password text-right">
-            Forgot <a href="#">password?</a>
-          </p>
-          <p className="forgot-password text-right">
-            Sign up: <a href="Signup">Sign up</a>
+
+          <p>
+            Si vous n'avez pas encore de compte, vous pouvez en créer un :
+            <Link to="/Signup" style={{ color: "#1877F2 " }}>
+              S'inscrire
+            </Link>
           </p>
         </form>
       </div>
@@ -113,7 +129,7 @@ function Login() {
         }
 
         .container {
-          width: 400px;
+          width: 500px;
         }
 
         .auth-inner {
@@ -193,7 +209,7 @@ function Login() {
 
         .forgot-password a {
           font-size: 14px;
-          color: #0366d6;
+          color: #blue;
         }
 
         .text-center {

@@ -9,17 +9,30 @@ import {
   Button,
   Image,
 } from "react-bootstrap";
+import moment from "moment";
 import { API_URL } from "../utils/config";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 const Discussionprofessional = () => {
   const [discussions, setDiscussions] = useState([]);
+  const [userdiscussions, setuserDiscussions] = useState([]);
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date()); // Nouvel état pour stocker l'heure actuelle
   const navigate = useNavigate();
 
+  const [connected, setConnected] = useState("");
+
+  const fetchUser = async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/profilusers/${id}`);
+      setConnected(response.data);
+      console.log("connected user", response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   // Fetch discussions for the user from the server on component mount
   const refetchmessages = (selectedDiscussion) => {
     axios
@@ -34,11 +47,13 @@ const Discussionprofessional = () => {
 
   useEffect(() => {
     const userId = sessionStorage.getItem("userId");
+
     if (!userId) {
       // If userId is not available, navigate to the login page
       navigate("/");
       return;
     }
+    fetchUser(userId);
     const professionalId = userId;
     console.log(professionalId);
     axios
@@ -51,6 +66,27 @@ const Discussionprofessional = () => {
         console.error("Error fetching discussions:", error);
       });
   }, [navigate]);
+  //////////////////////////////////////
+
+  useEffect(() => {
+    const userId = sessionStorage.getItem("userId");
+    if (!userId) {
+      // If userId is not available, navigate to the login page
+      navigate("/");
+      return;
+    }
+    axios
+      .get(`${API_URL}/getUserDiscussions/${userId}`) // Replace "userId" with the actual user ID
+      .then((response) => {
+        console.log(response.data);
+        setuserDiscussions(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching discussions:", error);
+      });
+  }, [navigate]);
+
+  ////////////////////////
 
   // Fetch messages for the selected discussion when it changes
   useEffect(() => {
@@ -75,40 +111,118 @@ const Discussionprofessional = () => {
 
   // ...
   const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
-    console.log(newMessage);
-    console.log(selectedDiscussion._id);
-    console.log(selectedDiscussion.user.username);
-    // Obtenir la date et l'heure actuelles en temps réel
-    const timestamp = currentTime.toISOString();
-    // Send the new message to the server
+    if (!newMessage.trim() && !selectedPhoto) return;
+
+    const formData = new FormData();
+    formData.append("sender", connected.username);
+    formData.append("text", newMessage.trim());
+    if (selectedPhoto) {
+      formData.append("photo", selectedPhoto);
+    }
+
     axios
-      .post(`${API_URL}/addMessage?discussionId=${selectedDiscussion._id}`, {
-        sender: `${selectedDiscussion.professional.username}`, // You can change the sender based on the user/professional
-        content: newMessage.trim(),
-        timestamp: timestamp,
-      })
+      .post(
+        `${API_URL}/addMessage?discussionId=${selectedDiscussion._id}`,
+        formData
+      )
       .then((response) => {
         setMessages([...messages, response.data]);
-        setNewMessage("");
         refetchmessages(selectedDiscussion);
+        setNewMessage("");
+        setSelectedPhoto(null);
       })
       .catch((error) => {
         console.error("Error sending message:", error);
       });
   };
 
+  //////////////////////send photo////////////////
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    setSelectedPhoto(file);
+  };
+  //////////////////////////////////////////
+  useEffect(() => {
+    const userId = sessionStorage.getItem("userId");
+
+    if (selectedDiscussion) {
+      const discussionId = selectedDiscussion._id;
+
+      const fetchNewMessages = async () => {
+        try {
+          const response = await axios.get(
+            `${API_URL}/getMessages/${discussionId}`
+          );
+          const newMessages = response.data.filter(
+            (message) => message.sender !== connected.username
+          );
+
+          if (newMessages.length > 0) {
+            if ("Notification" in window) {
+              Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                  newMessages.forEach((message) => {
+                    new Notification("New Message", {
+                      body: `${message.sender}: ${message.content}`,
+                      icon: `${API_URL}/${message.photoUrl}`,
+                    });
+                  });
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching new messages:", error);
+        }
+      };
+
+      const interval = setInterval(fetchNewMessages, 5000); // Check for new messages every 5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [selectedDiscussion, connected.username]);
+
   return (
     <div>
       <div>
         <Header />
-        {/* Your ScreenTwo content */}
       </div>
-
+      <hr></hr>
+      <hr></hr>
+      <hr></hr>
       <Row>
         <Col sm={4}>
-          <div className="chat-header">Discussions</div>
-          <ListGroup>
+          <h2 className="chat-header">Discussions</h2>
+          <ListGroup className="khlifa">
+            <div>
+              {userdiscussions?.map((discussion) => (
+                <ListGroup.Item
+                  key={discussion._id}
+                  className="chat-message"
+                  active={
+                    selectedDiscussion &&
+                    selectedDiscussion._id === discussion._id
+                  }
+                  action
+                  onClick={() => handleDiscussionClick(discussion)}
+                >
+                  <Image
+                    src={`${API_URL}/${discussion.user.picture}`}
+                    alt="Avatar"
+                    roundedCircle
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      marginRight: "10px",
+                      border: "1px solid black",
+                    }} // Adjust the spacing between the image and the email
+                  />
+                  {discussion.professional.email}
+                </ListGroup.Item>
+              ))}
+            </div>
             {discussions?.map((discussion) => (
               <ListGroup.Item
                 key={discussion._id}
@@ -139,9 +253,9 @@ const Discussionprofessional = () => {
           {selectedDiscussion ? (
             <>
               <div className="messages-container">
-                <div className="chat-header">Chat Room</div>
+                <h1 className="chat-header1">Chat Room</h1>
                 <div className="chat-messages">
-                  <ListGroup>
+                  <ListGroup className="khlifa">
                     {messages.map((message) => (
                       <ListGroup.Item
                         key={message._id}
@@ -150,28 +264,61 @@ const Discussionprofessional = () => {
                         <strong className="chat-message-sender">
                           {message.sender}
                         </strong>
-                        <div className="chat-message-content">
-                          {message.content}
+                        {message.content && (
+                          <div className="chat-message-content">
+                            {message.content}
+                          </div>
+                        )}
+
+                        <div className="chat-message-timestamp">
+                          {message.photoUrl && (
+                            <div>
+                              <img
+                                src={`${API_URL}/${message.photoUrl}`}
+                                alt="Message_Photo"
+                                style={{
+                                  maxWidth: "100%",
+                                  height: "100px",
+                                  width: "100px",
+                                  marginTop: "10px",
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                         <div className="chat-message-timestamp">
-                          {message.timestamp}
+                          {message.timestamp &&
+                            moment(message.timestamp).format(
+                              "A MM DD YY hh:mm"
+                            )}
                         </div>
                       </ListGroup.Item>
                     ))}
                   </ListGroup>
                   <div className="chat-input">
                     <Form.Control
+                      className="chat-input"
                       type="text"
                       placeholder="Type your message..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                     />
+                    <input type="file" onChange={handlePhotoUpload} />
                     <Button
                       type="button"
-                      variant="outline-primary"
+                      style={{
+                        backgroundColor: "#1877F2",
+                        padding: "10px 20px",
+                        border: "2px solid white",
+                        color: "#ffffff",
+                        borderRadius: "8px",
+                        boxShadow: "4px 4px 6px rgba(8, 0, 0, 0.2)",
+                        textDecoration: "none",
+                        transition: "background-color 0.3s ease",
+                      }}
                       onClick={handleSendMessage}
                     >
-                      Send
+                      Envoyer
                     </Button>
                   </div>
                 </div>
@@ -191,36 +338,52 @@ const Discussionprofessional = () => {
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
           }
+           h2,h1 {
+          text-align: center;
+         }
 
           .chat-container {
             margin: 40px auto;
             max-width: 600px;
-            background-color: #fff;
+            backgroundColor: "#1877F2",
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           }
 
-          .chat-header {
-            padding: 16px;
-            background-color: #3ab879;
-            color: #fff;
-            font-size: 18px;
-            font-weight: 600;
-            border-radius: 6px 6px 0 0;
+         .chat-header {
+             height: 10vh;
+            border: 2px solid black;
+            background-color: #319795;  
+            box-shadow: 4px 4px 6px rgba(8, 0, 0, 0.1);  
+            text-decoration: none;  
+            border-radius: 10px;  
+            transition: background-color 0.3s ease;  
+          }
+          .chat-header1{
+            height: 10vh;
+            border: 2px solid black;
+            background-color: #319795;  
+            box-shadow: 4px 4px 6px rgba(8, 0, 0, 0.1);  
+            text-decoration: none;  
+            border-radius: 10px;  
+            transition: background-color 0.3s ease;
           }
 
+          .khlifa{ max-height: 330px;
+            overflow-y: auto;}
           .chat-messages {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 12px;
-            background-color: #f5f5f5;  
-            border-radius: 6px;  
+             padding: 12px;
+            background-color: white;  
+            border-radius: 20px;  
+ 
           }
 
           .chat-message {
             margin-bottom: 8px;
             padding: 8px;  
-            border-radius: 6px;  
+            border-radius: 20px;
+            box-shadow: 4px 4px 6px rgba(8, 0, 0, 0.1);  
+  
           }
 
           .chat-message-user {
@@ -236,7 +399,7 @@ const Discussionprofessional = () => {
           }
          .chat-message-sender {
             font-weight: bold;
-            color: #007bff;  
+            color: black;  
           }
            .chat-message-timestamp {
             color: #888;
@@ -248,17 +411,18 @@ const Discussionprofessional = () => {
             margin-top: 12px;
             border-top: 1px solid #ddd;
             padding-top: 12px;
+            border-radius: 6px;
+
           }
 
           .chat-input input {
             flex: 1;
             padding: 8px 12px;
             border: none;
-            border-radius: 6px;
-          }
+           }
 
           .chat-input button {
-            background-color: #3ab879;
+          backgroundColor: "#1877F2",
             color: #fff;
             border: none;
             border-radius: 6px;
